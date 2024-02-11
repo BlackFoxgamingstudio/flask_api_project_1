@@ -15,21 +15,17 @@ Using OpenAI we can provide communities with a clear action checklist to help th
 # Solution Overview:
 By creating a Ci/CD devops pipe, using MongoDB, a Flask API and OpenAI’s REST API, BlackFox Studio has created a Scalable Microservice to provide a “Training Service” as a COE Project deliverable.
 
-# DEMO:
-https://blackfoxgamingstudio.github.io/black_lion_blogs/checklist_demo.html
-
-# API:
-https://github-search-v5sx.onrender.com/
-
-# Repo:
-https://github.com/BlackFoxgamingstudio/flask_api_project_1
-documentation: README
-
 # Run: 
 gunicorn -w 4 main:app -b :5081
 
 # Local test: - Pass
 curl http://localhost:8000/getChecklist/https://github.com/pulumi/examples
+
+# DEMO:
+https://blackfoxgamingstudio.github.io/black_lion_blogs/checklist_demo.html
+
+# API:
+https://github-search-v5sx.onrender.com/
 
 # Project Website: 
  - https://sites.google.com/blackfoxstudios.org/blackfoxstudios/coming-soon/center-of-excellence?authuser=4
