@@ -1,5 +1,4 @@
-Flask==2.0.1
-Flask-CORS==3.0.10
-pymongo==3.12.0
-Flask==2.0.1
-Werkzeug==2.0.1
+Flask
+Flask-CORS
+pymongo[srv]
+Werkzeug
