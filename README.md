@@ -1,6 +1,11 @@
 # flask_api_project_1
  - 2nd Derivative Overview - Center of Excellence
 
+# Impact statement: 
+Community development through operations & invitation
+ -This solution is the development of Community.  For the community development operations engineer.
+
+
 # BF Design Principles:
     - Always use general available doc
     - Always create check list of actionable steps
@@ -29,3 +34,12 @@ https://github-search-v5sx.onrender.com/
 
 # Project Website: 
  - https://sites.google.com/blackfoxstudios.org/blackfoxstudios/coming-soon/center-of-excellence?authuser=4
+
+
+
+Russell Powers
+xxx-xxx-2605
+Community DevOps Engineer
+LinkedIn Profile: 
+Non-profit Website: 
+"Find your own way or make one!"
