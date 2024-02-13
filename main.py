@@ -11,8 +11,8 @@ CORS(app)  # Enable CORS for all domains
 client = MongoClient("mongodb+srv://blackloin:naruto45@cluster0.fmktl.mongodb.net/?retryWrites=true&w=majority")
 db = client['test']  # Assuming 'keytechlabs' is the correct database
 components_collection = db['components_collection']
-checklist_tech_collection = db['Checklist_tech']
-powershell_checklist_collection = db['powershell_Checklist']
+checklist_tech_collection = db['keytechlabs.Checklist_tech']
+powershell_checklist_collection = db['keytechlabs.powershell_Checklist']
 
 @app.route('/getChecklist/<path:url>', methods=['GET'])
 def get_checklist(url):
