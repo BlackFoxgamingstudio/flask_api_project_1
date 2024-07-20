@@ -13,7 +13,8 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for all domains
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'pdf', 'docx'}
-openai.api_key = 'sk-proj-lUTO4mEBYhFfbcq0qkZ9T3BlbkFJRn8ohuhf3wzPpgD7Rm4i'
+# Load OpenAI API key from environment variable
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Ensure the upload folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
