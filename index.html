@@ -72,7 +72,7 @@ gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
             const picker = new google.picker.PickerBuilder()
                 .addView(google.picker.ViewId.DOCS)
                 .setOAuthToken(gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token)
-                .setDeveloperKey('YOUR_API_KEY')
+                .setDeveloperKey('AIzaSyBPPC2B70jYecqEQo-VbNy06VenxapaFJU')
                 .setCallback(pickerCallback)
                 .build();
             picker.setVisible(true);
