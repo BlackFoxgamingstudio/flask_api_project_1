@@ -20,7 +20,7 @@
         <h1 class="text-center">Generate Storyboard from Google Drive Document</h1>
         <div class="text-center mb-4">
             <div id="g_id_onload"
-                 data-client_id="1089323494988-rs9lvdd162aip6crvm95q4pq6tkuo8td.apps.googleusercontent.com"
+                 data-client_id="YOUR_GOOGLE_CLIENT_ID"
                  data-callback="handleCredentialResponse"
                  data-auto_prompt="false">
             </div>
@@ -52,7 +52,7 @@
             console.log('Email: ' + responsePayload.email);
 
             google.accounts.oauth2.initTokenClient({
-                client_id: '1089323494988-rs9lvdd162aip6crvm95q4pq6tkuo8td.apps.googleusercontent.com',
+                client_id: 'YOUR_GOOGLE_CLIENT_ID',
                 scope: 'https://www.googleapis.com/auth/drive.readonly',
                 callback: (tokenResponse) => {
                     accessToken = tokenResponse.access_token;
@@ -83,7 +83,7 @@
             const picker = new google.picker.PickerBuilder()
                 .addView(google.picker.ViewId.DOCS)
                 .setOAuthToken(accessToken)
-                .setDeveloperKey('AIzaSyBPPC2B70jYecqEQo-VbNy06VenxapaFJU')
+                .setDeveloperKey('YOUR_DEVELOPER_KEY')
                 .setCallback(pickerCallback)
                 .build();
             picker.setVisible(true);
@@ -207,7 +207,33 @@
         }
 
         // Load the Google API client library and set up the client
-        handleClientLoad();
+        function handleClientLoad() {
+            gapi.load('client', initializeClient);
+        }
+
+        function initializeClient() {
+            gapi.client.init({
+                apiKey: 'YOUR_API_KEY',
+                clientId: 'YOUR_GOOGLE_CLIENT_ID',
+                discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
+                scope: 'https://www.googleapis.com/auth/drive.readonly'
+            }).then(function () {
+                gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+                updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+            }, function(error) {
+                console.error('Error initializing client:', error);
+            });
+        }
+
+        function updateSigninStatus(isSignedIn) {
+            if (isSignedIn) {
+                console.log('User is signed in.');
+            } else {
+                console.log('User is not signed in.');
+            }
+        }
+
+        window.onload = handleClientLoad;
     </script>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
