@@ -36,18 +36,21 @@
         let cards = [];
         const apiUrl = 'https://checklist-flask-api.onrender.com/generate_images'; // Replace with your API URL
 
+        const clientId = '1089323494988-rs9lvdd162aip6crvm95q4pq6tkuo8td.apps.googleusercontent.com';
+        const apiKey = 'AIzaSyBPPC2B70jYecqEQo-VbNy06VenxapaFJU';
+
         function handleClientLoad() {
             gapi.load('client:auth2', initClient);
         }
 
-         function initClient() {
+        function initClient() {
             gapi.client.init({
-                apiKey: 'AIzaSyBPPC2B70jYecqEQo-VbNy06VenxapaFJU',
-                clientId: '1089323494988-rs9lvdd162aip6crvm95q4pq6tkuo8td.apps.googleusercontent.com',
+                apiKey: apiKey,
+                clientId: clientId,
                 discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
                 scope: 'https://www.googleapis.com/auth/drive.readonly'
             }).then(() => {
-gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+                gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
                 updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
             });
         }
@@ -72,7 +75,7 @@ gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
             const picker = new google.picker.PickerBuilder()
                 .addView(google.picker.ViewId.DOCS)
                 .setOAuthToken(gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token)
-                .setDeveloperKey('AIzaSyBPPC2B70jYecqEQo-VbNy06VenxapaFJU')
+                .setDeveloperKey(apiKey)
                 .setCallback(pickerCallback)
                 .build();
             picker.setVisible(true);
@@ -82,6 +85,8 @@ gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
             if (data.action === google.picker.Action.PICKED) {
                 const fileId = data.docs[0].id;
                 downloadFile(fileId);
+            } else if (data.action === google.picker.Action.CANCEL) {
+                console.log('User canceled the picker.');
             }
         }
 
@@ -92,6 +97,9 @@ gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
             }).then(response => {
                 const fileContent = response.body;
                 parsedPrompts = splitIntoPrompts(fileContent);
+                generateImages();
+            }, function(error) {
+                console.error('Error downloading file:', error);
             });
         }
 
@@ -195,5 +203,6 @@ gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
     </script>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js”></body>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
 </html>
