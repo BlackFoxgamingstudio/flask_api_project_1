@@ -6,7 +6,6 @@
     <title>Generate Storyboard</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://apis.google.com/js/api.js"></script>
     <style>
         .container { max-width: 1200px; margin: 20px auto; }
         .result img { max-width: 100%; height: auto; }
@@ -84,7 +83,7 @@
             const picker = new google.picker.PickerBuilder()
                 .addView(google.picker.ViewId.DOCS)
                 .setOAuthToken(accessToken)
-                .setDeveloperKey('AIzaSyB2gDcdT1DhdQVipL0865cYwP3pNLbm_QM')
+                .setDeveloperKey('AIzaSyBPPC2B70jYecqEQo-VbNy06VenxapaFJU') // Use your actual API key here
                 .setCallback(pickerCallback)
                 .build();
             picker.setVisible(true);
@@ -107,7 +106,7 @@
                 const fileContent = response.body;
                 parsedPrompts = splitIntoPrompts(fileContent);
                 generateImages();
-            }).catch(error => {
+            }, function(error) {
                 console.error('Error downloading file:', error);
             });
         }
@@ -213,7 +212,7 @@
 
         function initializeClient() {
             gapi.client.init({
-                apiKey: 'AIzaSyB2gDcdT1DhdQVipL0865cYwP3pNLbm_QM',
+                apiKey: 'AIzaSyBPPC2B70jYecqEQo-VbNy06VenxapaFJU',
                 clientId: '1089323494988-rs9lvdd162aip6crvm95q4pq6tkuo8td.apps.googleusercontent.com',
                 discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
                 scope: 'https://www.googleapis.com/auth/drive.readonly'
