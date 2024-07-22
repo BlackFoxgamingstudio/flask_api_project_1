@@ -3,7 +3,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generate Storyboard</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://apis.google.com/js/api.js" onload="initializeGCS()"></script>
     <style>
         .container { max-width: 1200px; margin: 20px auto; }
         .result img { max-width: 100%; height: auto; }
@@ -29,42 +28,49 @@
 
     <script type="text/javascript">
         const bucketName = 'story_board';
-        const keyFilename = 'key.json'; // Update with your actual path
+        const apiUrl = 'https://checklist-flask-api.onrender.com/generate_images'; // Replace with your API URL
+        const token = 'YOUR_ACCESS_TOKEN'; // Replace with your Google Cloud Storage access token
 
         let parsedPrompts = [];
         let currentPage = 1;
         const itemsPerPage = 6;
         let cards = [];
-        const apiUrl = 'https://checklist-flask-api.onrender.com/generate_images'; // Replace with your API URL
-
-        function initializeGCS() {
-            const {Storage} = require('@google-cloud/storage');
-            global.storage = new Storage({keyFilename: keyFilename});
-        }
 
         function listFiles() {
             const fileListContainer = document.getElementById('file_list');
             fileListContainer.innerHTML = '';
 
-            storage.bucket(bucketName).getFiles().then(files => {
-                files[0].forEach(file => {
+            fetch(`https://storage.googleapis.com/storage/v1/b/${bucketName}/o`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                data.items.forEach(file => {
                     const fileItem = document.createElement('div');
                     fileItem.className = 'file-item';
                     fileItem.innerHTML = `<p>${file.name}</p><button onclick="downloadFile('${file.name}')">Download</button>`;
                     fileListContainer.appendChild(fileItem);
                 });
-            }).catch(error => {
+            })
+            .catch(error => {
                 console.error('Error listing files:', error);
             });
         }
 
         function downloadFile(fileName) {
-            const file = storage.bucket(bucketName).file(fileName);
-            file.download().then(contents => {
-                const fileContent = contents.toString('utf-8');
+            fetch(`https://storage.googleapis.com/storage/v1/b/${bucketName}/o/${encodeURIComponent(fileName)}?alt=media`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.text())
+            .then(fileContent => {
                 parsedPrompts = splitIntoPrompts(fileContent);
                 generateImages();
-            }).catch(error => {
+            })
+            .catch(error => {
                 console.error('Error downloading file:', error);
             });
         }
@@ -90,4 +96,77 @@
         }
 
         function generateImageCard(prompt, partNumber) {
-            fetch
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ prompt: prompt })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    return;
+                }
+
+                const card = {
+                    title: `Part ${partNumber}`,
+                    prompt: prompt,
+                    image_url: data[0].image_url,
+                    notes: ''
+                };
+
+                cards.push(card);
+                renderCards();
+            })
+            .catch(error => {
+                console.error('Error generating image:', error);
+            });
+        }
+
+        function renderCards() {
+            const resultsContainer = document.getElementById('results');
+            resultsContainer.innerHTML = '';
+
+            cards.forEach((card, index) => {
+                const col = document.createElement('div');
+                col.classList.add('col-md-4');
+                col.innerHTML = `
+                    <div class="card storyboard-card">
+                        <div class="card-body">
+                            <h2 class="storyboard-card-title">${card.title}</h2>
+                            <p>${card.prompt}</p>
+                            <img class="storyboard-card-img" src="${card.image_url}" alt="${card.title}">
+                            <textarea class="form-control text-area storyboard-card-text" placeholder="Add your notes here..." onchange="updateCardText(${index}, this.value)">${card.notes}</textarea>
+                        </div>
+                    </div>`;
+                resultsContainer.appendChild(col);
+            });
+        }
+
+        function updateCardText(cardIndex, text) {
+            cards[cardIndex].notes = text;
+        }
+
+        function setupPagination(totalItems) {
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            const paginationContainer = document.getElementById('pagination');
+            paginationContainer.innerHTML = '';
+
+            for (let i = 1; i <= totalPages; i++) {
+                const li = document.createElement('li');
+                li.classList.add('page-item', i === currentPage ? 'active' : '');
+                li.innerHTML = `<a class="page-link" href="#" onclick="goToPage(${i})">${i}</a>`;
+                paginationContainer.appendChild(li);
+            }
+        }
+
+        function goToPage(pageNumber) {
+            currentPage = pageNumber;
+            generateImages();
+        }
+    </script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
