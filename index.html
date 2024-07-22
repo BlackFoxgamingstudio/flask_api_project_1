@@ -6,6 +6,7 @@
     <title>Generate Storyboard</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js"></script>
     <style>
         .container { max-width: 1200px; margin: 20px auto; }
         .result img { max-width: 100%; height: auto; }
@@ -20,7 +21,7 @@
         <h1 class="text-center">Generate Storyboard from Google Drive Document</h1>
         <div class="text-center mb-4">
             <div id="g_id_onload"
-                 data-client_id="1089323494988-rs9lvdd162aip6crvm95q4pq6tkuo8td.apps.googleusercontent.com"
+                 data-client_id="YOUR_CLIENT_ID"
                  data-callback="handleCredentialResponse"
                  data-auto_prompt="false">
             </div>
@@ -52,7 +53,7 @@
             console.log('Email: ' + responsePayload.email);
 
             google.accounts.oauth2.initTokenClient({
-                client_id: '1089323494988-rs9lvdd162aip6crvm95q4pq6tkuo8td.apps.googleusercontent.com',
+                client_id: 'YOUR_CLIENT_ID',
                 scope: 'https://www.googleapis.com/auth/drive.readonly',
                 callback: (tokenResponse) => {
                     accessToken = tokenResponse.access_token;
@@ -83,7 +84,7 @@
             const picker = new google.picker.PickerBuilder()
                 .addView(google.picker.ViewId.DOCS)
                 .setOAuthToken(accessToken)
-                .setDeveloperKey('AIzaSyBPPC2B70jYecqEQo-VbNy06VenxapaFJU')
+                .setDeveloperKey('YOUR_API_KEY')
                 .setCallback(pickerCallback)
                 .build();
             picker.setVisible(true);
@@ -206,15 +207,14 @@
             generateImages();
         }
 
-        // Load the Google API client library and set up the client
         function handleClientLoad() {
-            gapi.load('client', initializeClient);
+            gapi.load('client:auth2', initializeClient);
         }
 
         function initializeClient() {
             gapi.client.init({
-                apiKey: 'AIzaSyBPPC2B70jYecqEQo-VbNy06VenxapaFJU',
-                clientId: '1089323494988-rs9lvdd162aip6crvm95q4pq6tkuo8td.apps.googleusercontent.com',
+                apiKey: 'YOUR_API_KEY',
+                clientId: 'YOUR_CLIENT_ID',
                 discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
                 scope: 'https://www.googleapis.com/auth/drive.readonly'
             }).then(function () {
