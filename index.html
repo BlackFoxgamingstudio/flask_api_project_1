@@ -1,11 +1,9 @@
-<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generate Storyboard</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://accounts.google.com/gsi/client"></script>
-    <script src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script src="https://apis.google.com/js/api.js" onload="initializeGCS()"></script>
     <style>
         .container { max-width: 1200px; margin: 20px auto; }
         .result img { max-width: 100%; height: auto; }
@@ -17,12 +15,12 @@
 </head>
 <body>
     <div class="container">
-        <h1 class="text-center">Generate Storyboard from Google Drive Document</h1>
+        <h1 class="text-center">Generate Storyboard from Google Cloud Storage</h1>
         <div class="text-center mb-4">
-            <button id="authorize_button" class="btn btn-success" onclick="handleAuthClick()">Authorize</button>
-            <button id="signout_button" class="btn btn-danger" onclick="handleSignoutClick()">Sign Out</button>
+            <button class="btn btn-success" onclick="listFiles()">List Files</button>
             <button class="btn btn-warning" onclick="generateImages()">Generate Storyboard</button>
         </div>
+        <div id="file_list" class="mt-4"></div>
         <div id="results" class="mt-4 row"></div>
         <nav>
             <ul id="pagination" class="pagination mt-4"></ul>
@@ -30,103 +28,41 @@
     </div>
 
     <script type="text/javascript">
-        const SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
-        const CLIENT_ID = '1089323494988-rs9lvdd162aip6crvm95q4pq6tkuo8td.apps.googleusercontent.com';
-        const API_KEY = 'AIzaSyB2gDcdT1DhdQVipL0865cYwP3pNLbm_QM';
-        const APP_ID = 'YOUR_APP_ID';  // Replace with your actual project number
+        const {Storage} = require('@google-cloud/storage');
+        const storage = new Storage({keyFilename: 'path/to/your/service-account-key.json'});
+        const bucketName = 'YOUR_BUCKET_NAME';
 
-        let tokenClient;
-        let accessToken = null;
-        let pickerInited = false;
-        let gisInited = false;
+        let parsedPrompts = [];
+        let currentPage = 1;
+        const itemsPerPage = 6;
+        let cards = [];
+        const apiUrl = 'https://checklist-flask-api.onrender.com/generate_images'; // Replace with your API URL
 
-        document.getElementById('authorize_button').style.visibility = 'hidden';
-        document.getElementById('signout_button').style.visibility = 'hidden';
+        function listFiles() {
+            const fileListContainer = document.getElementById('file_list');
+            fileListContainer.innerHTML = '';
 
-        function gapiLoaded() {
-            gapi.load('client:picker', initializePicker);
-        }
-
-        function initializePicker() {
-            gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest').then(() => {
-                pickerInited = true;
-                maybeEnableButtons();
+            storage.bucket(bucketName).getFiles().then(files => {
+                files[0].forEach(file => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `<p>${file.name}</p><button onclick="downloadFile('${file.name}')">Download</button>`;
+                    fileListContainer.appendChild(fileItem);
+                });
+            }).catch(error => {
+                console.error('Error listing files:', error);
             });
         }
 
-        function gisLoaded() {
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID,
-                scope: SCOPES,
-                callback: ''
+        function downloadFile(fileName) {
+            const file = storage.bucket(bucketName).file(fileName);
+            file.download().then(contents => {
+                const fileContent = contents.toString('utf-8');
+                parsedPrompts = splitIntoPrompts(fileContent);
+                generateImages();
+            }).catch(error => {
+                console.error('Error downloading file:', error);
             });
-            gisInited = true;
-            maybeEnableButtons();
-        }
-
-        function maybeEnableButtons() {
-            if (pickerInited && gisInited) {
-                document.getElementById('authorize_button').style.visibility = 'visible';
-            }
-        }
-
-        function handleAuthClick() {
-            tokenClient.callback = function (response) {
-                if (response.error !== undefined) {
-                    throw (response);
-                }
-                accessToken = response.access_token;
-                document.getElementById('signout_button').style.visibility = 'visible';
-                document.getElementById('authorize_button').innerText = 'Refresh';
-                createPicker();
-            };
-
-            if (accessToken === null) {
-                tokenClient.requestAccessToken({prompt: 'consent'});
-            } else {
-                tokenClient.requestAccessToken({prompt: ''});
-            }
-        }
-
-        function handleSignoutClick() {
-            if (accessToken) {
-                google.accounts.oauth2.revoke(accessToken, () => {
-                    accessToken = null;
-                    document.getElementById('authorize_button').innerText = 'Authorize';
-                    document.getElementById('signout_button').style.visibility = 'hidden';
-                });
-            }
-        }
-
-        function createPicker() {
-            const view = new google.picker.View(google.picker.ViewId.DOCS);
-            view.setMimeTypes('application/vnd.google-apps.document');
-            const picker = new google.picker.PickerBuilder()
-                .enableFeature(google.picker.Feature.NAV_HIDDEN)
-                .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
-                .setDeveloperKey(API_KEY)
-                .setAppId(APP_ID)
-                .setOAuthToken(accessToken)
-                .addView(view)
-                .addView(new google.picker.DocsUploadView())
-                .setCallback(pickerCallback)
-                .build();
-            picker.setVisible(true);
-        }
-
-        function pickerCallback(data) {
-            if (data.action === google.picker.Action.PICKED) {
-                const document = data[google.picker.Response.DOCUMENTS][0];
-                const fileId = document[google.picker.Document.ID];
-                gapi.client.drive.files.get({
-                    fileId: fileId,
-                    fields: '*'
-                }).then(response => {
-                    const fileContent = response.result;
-                    parsedPrompts = splitIntoPrompts(fileContent);
-                    generateImages();
-                });
-            }
         }
 
         function splitIntoPrompts(text) {
@@ -219,16 +155,8 @@
             currentPage = pageNumber;
             generateImages();
         }
-
-        window.onload = () => {
-            gapiLoaded();
-            gisLoaded();
-        };
     </script>
-    <script   src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
-    <script   src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
-</html>
