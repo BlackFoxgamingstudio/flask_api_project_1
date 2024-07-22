@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "russellnewstrorage",
+  "private_key_id": "fa2e9fe22011725a53b837207255be92b03a64c9",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDJKdSfbte0lVZ2\neepGD5DEl3cMl5yx4uBAsnMonfvgO/lvnHG9d9Q18VR6GHPfhCbQ0n2V4v5IAI2U\n8RG4eyER1us2AtYMyWvMFnnmgQE0i8ZL31JGysXkLmSPT/69YT8ItiB1sRh9v9jd\n0N4nukk4/IMAcuXlTyIUvmuiFAdY1kGNr8U3ge18qDrEV0eneuCjFiFjC92BQlnI\n1oYdlWSLycgtLnFS131/XA0hyWICH2hqYHYKxj1X54bQAfPPevw4lXmGuQEs8OqV\nYUoXfXywzM5n+4Qv+grSOXEwuCzhnzhTV/s/WwxQIZRs6NyjUByr9N2jCIz54s+m\nkBZh5bcRAgMBAAECggEAHbqyYyuY8mW9pP3IizkiroMqA3Dmpf1/IeCdl0ud3VpP\nt1h6EMPEV4KGdxLlEQvxRpxNFhk5dj+qrO/hrA96aC4Ije9mXfZomX1a35+CI5di\no3TqLm8qRto6X1m1rpxQGgP8kRguo+r17HZBVsK3rpXW8HqKklSbF1C7DHWETnL8\nd3CLJ5DcyMo4Uvi9XkcOoKNUZVLiHCFL7faFuDEPR7TVucPDTneTEMz0rq8ZAkKs\nND9d4nwOZ7dLrzERf+xsvvgZk2av40/WoBK6vMGaVjM3ViPNO2cOvB+e0Dyg/9fl\nSEgnMQxfbBoC5mF5EHfZLZFf1lh2oW0syuWClDlDBwKBgQDzoJ6JM2gOE9ZBPWIk\nMpJBlnzi++t/Ck3W2WJcxAmS6nKD/cF99jbH0jSyS8jBOoJpZJxgwAy6ZTVQ/j2R\ncsNqj5f/Ifd+EO1KaZwhivdMQA30xl+dLiZairP7jkbJOoDXBFG/6g+Z0F5/+ayR\nAJv6SYqzUxuvZQLHNdOEzGVZbwKBgQDTYSPTiyayIPC2FS65JlE5u6dsWXsES0ep\noxhZA06J6knDA1aqzUtPNKctRykW1rbEgX0jXtck1RMYvs8pwoTh70ZjNpz5++uu\nPBhlPEh4QmWan3pFoCtAcaSz8zSGaSB9xT1oYUQxUfweVpnCAnCjYmnPm4Ygu6sL\ns+dVylC3fwKBgQDUznJs6gh0c4NtjU7Sy5HR1L/WDbORTtDbYRt4aIzsVfodrWR8\nwLrtJIJ/U49SqecMZKPsJxV3I7zEuK/TAuoLhM6CP4tOBT8hBssoyZhmdHU8YKNY\nSt2ZrRq2G3tdfsrYBp/aAXwLIWXKZ68DIgMdR2vuZCQEuzkIBc5za48D5QKBgC+d\noz9lCit4JiEuNl841XVG41kR8xctihAZkEOE7i09HK6UUvKY2k0WVE5ryEK/zV4I\nuVK9a4N9iBa77NjAW8S1bMquo7/gUt/l46zyXnTQqCijohyLDxMuRmbO81cP2WTb\niJC50G23xS5kXbCJciwr4CAHLbiz7bzuIr99mp8rAoGAZpEXv+tAGAOfTQyPU7cC\nR6zl3RZtec8F6oAIQgtj5SniMjauSZJ5Y/BMtZRbR+Kzyn50hLaZojbjQHE9xF76\n5SarHJr0/OT5WQdsSRrt2gmHRIdEjyWcz8eaw/Zz1S9lEyy04zYw9zSWK6xdMTpn\n50iRZRPzFFx3Y8Fz9RQWKbs=\n-----END PRIVATE KEY-----\n",
+  "client_email": "storyboard@russellnewstrorage.iam.gserviceaccount.com",
+  "client_id": "102205582866007425540",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/storyboard%40russellnewstrorage.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
