@@ -1,89 +1,230 @@
 
-  <head>
-    <title>Drive API Quickstart</title>
-    <meta charset="utf-8" />
-  </head>
-  <body>
-    <p>Drive API Quickstart</p>
+    <title>Generate Storyboard</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <style>
+        .container { max-width: 1200px; margin: 20px auto; }
+        .result img { max-width: 100%; height: auto; }
+        .storyboard-card { margin-bottom: 20px; }
+        .storyboard-card img { max-width: 100%; height: auto; border: 1px solid #ccc; }
+        .storyboard-card-title { font-size: 1.25rem; margin-bottom: 10px; }
+        .pagination { justify-content: center; }
+    </style>
 
-    <!--Add buttons to initiate auth sequence and sign out-->
-    <button id="authorize_button" onclick="handleAuthClick()">Authorize</button>
-    <button id="signout_button" onclick="handleSignoutClick()">Sign Out</button>
-
-    <pre id="content" style="white-space: pre-wrap;"></pre>
+    <div class="container">
+        <h1 class="text-center">Generate Storyboard from Google Drive Document</h1>
+        <div class="text-center mb-4">
+            <button id="authorize_button" class="btn btn-success" onclick="handleAuthClick()">Authorize</button>
+            <button id="signout_button" class="btn btn-danger" onclick="handleSignoutClick()">Sign Out</button>
+            <button class="btn btn-warning" onclick="generateImages()">Generate Storyboard</button>
+        </div>
+        <div id="results" class="mt-4 row"></div>
+        <nav>
+            <ul id="pagination" class="pagination mt-4"></ul>
+        </nav>
+    </div>
 
     <script type="text/javascript">
-      /* exported gapiLoaded */
-      /* exported gisLoaded */
-      /* exported handleAuthClick */
-      /* exported handleSignoutClick */
+        const SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
+        const CLIENT_ID = '1089323494988-rs9lvdd162aip6crvm95q4pq6tkuo8td.apps.googleusercontent.com';
+        const API_KEY = 'AIzaSyB2gDcdT1DhdQVipL0865cYwP3pNLbm_QM';
+        const APP_ID = 'YOUR_APP_ID';  // Replace with your actual project number
 
-      // TODO(developer): Set to client ID and API key from the Developer Console
-      const CLIENT_ID = '<YOUR_CLIENT_ID>';
-      const API_KEY = '<YOUR_API_KEY>';
+        let tokenClient;
+        let accessToken = null;
+        let pickerInited = false;
+        let gisInited = false;
 
-      // Discovery doc URL for APIs used by the quickstart
-      const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+        document.getElementById('authorize_button').style.visibility = 'hidden';
+        document.getElementById('signout_button').style.visibility = 'hidden';
 
-      // Authorization scopes required by the API; multiple scopes can be
-      // included, separated by spaces.
-      const SCOPES = 'https://www.googleapis.com/auth/drive.metadata.readonly';
-
-      let tokenClient;
-      let gapiInited = false;
-      let gisInited = false;
-
-      document.getElementById('authorize_button').style.visibility = 'hidden';
-      document.getElementById('signout_button').style.visibility = 'hidden';
-
-      /**
-       * Callback after api.js is loaded.
-       */
-      function gapiLoaded() {
-        gapi.load('client', initializeGapiClient);
-      }
-
-      /**
-       *  Sign out the user upon button click.
-       */
-      function handleSignoutClick() {
-        const token = gapi.client.getToken();
-        if (token !== null) {
-          google.accounts.oauth2.revoke(token.access_token);
-          gapi.client.setToken('');
-          document.getElementById('content').innerText = '';
-          document.getElementById('authorize_button').innerText = 'Authorize';
-          document.getElementById('signout_button').style.visibility = 'hidden';
+        function gapiLoaded() {
+            gapi.load('client:picker', initializePicker);
         }
-      }
 
-      /**
-       * Print metadata for first 10 files.
-       */
-      async function listFiles() {
-        let response;
-        try {
-          response = await gapi.client.drive.files.list({
-            'pageSize': 10,
-            'fields': 'files(id, name)',
-          });
-        } catch (err) {
-          document.getElementById('content').innerText = err.message;
-          return;
+        async function initializePicker() {
+            await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
+            pickerInited = true;
+            maybeEnableButtons();
         }
-        const files = response.result.files;
-        if (!files || files.length == 0) {
-          document.getElementById('content').innerText = 'No files found.';
-          return;
+
+        function gisLoaded() {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SCOPES,
+                callback: '',
+            });
+            gisInited = true;
+            maybeEnableButtons();
         }
-        // Flatten to string to display
-        const output = files.reduce(
-            (str, file) => `${str}${file.name} (${file.id})\n`,
-            'Files:\n');
-        document.getElementById('content').innerText = output;
-      }
+
+        function maybeEnableButtons() {
+            if (pickerInited && gisInited) {
+                document.getElementById('authorize_button').style.visibility = 'visible';
+            }
+        }
+
+        function handleAuthClick() {
+            tokenClient.callback = async (response) => {
+                if (response.error !== undefined) {
+                    throw (response);
+                }
+                accessToken = response.access_token;
+                document.getElementById('signout_button').style.visibility = 'visible';
+                document.getElementById('authorize_button').innerText = 'Refresh';
+                await createPicker();
+            };
+
+            if (accessToken === null) {
+                tokenClient.requestAccessToken({prompt: 'consent'});
+            } else {
+                tokenClient.requestAccessToken({prompt: ''});
+            }
+        }
+
+        function handleSignoutClick() {
+            if (accessToken) {
+                accessToken = null;
+                google.accounts.oauth2.revoke(accessToken);
+                document.getElementById('content').innerText = '';
+                document.getElementById('authorize_button').innerText = 'Authorize';
+                document.getElementById('signout_button').style.visibility = 'hidden';
+            }
+        }
+
+        function createPicker() {
+            const view = new google.picker.View(google.picker.ViewId.DOCS);
+            view.setMimeTypes('image/png,image/jpeg,image/jpg');
+            const picker = new google.picker.PickerBuilder()
+                .enableFeature(google.picker.Feature.NAV_HIDDEN)
+                .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+                .setDeveloperKey(API_KEY)
+                .setAppId(APP_ID)
+                .setOAuthToken(accessToken)
+                .addView(view)
+                .addView(new google.picker.DocsUploadView())
+                .setCallback(pickerCallback)
+                .build();
+            picker.setVisible(true);
+        }
+
+        async function pickerCallback(data) {
+            if (data.action === google.picker.Action.PICKED) {
+                const document = data[google.picker.Response.DOCUMENTS][0];
+                const fileId = document[google.picker.Document.ID];
+                const res = await gapi.client.drive.files.get({
+                    'fileId': fileId,
+                    'fields': '*',
+                });
+                const fileContent = res.result;
+                parsedPrompts = splitIntoPrompts(fileContent);
+                generateImages();
+            }
+        }
+
+        function splitIntoPrompts(text) {
+            const lines = text.split('\n');
+            return lines.filter(line => line.trim() !== '');
+        }
+
+        async function generateImages() {
+            const resultsContainer = document.getElementById('results');
+            resultsContainer.innerHTML = '';
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, parsedPrompts.length);
+
+            for (let i = startIndex; i < endIndex; i++) {
+                const prompt = parsedPrompts[i];
+                const card = await generateImageCard(prompt, i + 1);
+                if (card) {
+                    cards.push(card);
+                    renderCards();
+                }
+            }
+
+            setupPagination(parsedPrompts.length);
+        }
+
+        async function generateImageCard(prompt, partNumber) {
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+
+                const data = await response.json();
+                if (data.error) {
+                    return null;
+                }
+
+                const card = {
+                    title: `Part ${partNumber}`,
+                    prompt: prompt,
+                    image_url: data[0].image_url,
+                    notes: ''
+                };
+
+                return card;
+            } catch (error) {
+                console.error('Error generating image:', error);
+                return null;
+            }
+        }
+
+        function renderCards() {
+            const resultsContainer = document.getElementById('results');
+            resultsContainer.innerHTML = '';
+
+            cards.forEach((card, index) => {
+                const col = document.createElement('div');
+                col.classList.add('col-md-4');
+                col.innerHTML = `
+                    <div class="card storyboard-card">
+                        <div class="card-body">
+                            <h2 class="storyboard-card-title">${card.title}</h2>
+                            <p>${card.prompt}</p>
+                            <img class="storyboard-card-img" src="${card.image_url}" alt="${card.title}">
+                            <textarea class="form-control text-area storyboard-card-text" placeholder="Add your notes here..." onchange="updateCardText(${index}, this.value)">${card.notes}</textarea>
+                        </div>
+                    </div>`;
+                resultsContainer.appendChild(col);
+            });
+        }
+
+        function updateCardText(cardIndex, text) {
+            cards[cardIndex].notes = text;
+        }
+
+        function setupPagination(totalItems) {
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            const paginationContainer = document.getElementById('pagination');
+            paginationContainer.innerHTML = '';
+
+            for (let i = 1; i <= totalPages; i++) {
+                const li = document.createElement('li');
+                li.classList.add('page-item', i === currentPage ? 'active' : '');
+                li.innerHTML = `<a class="page-link" href="#" onclick="goToPage(${i})">${i}</a>`;
+                paginationContainer.appendChild(li);
+            }
+        }
+
+        function goToPage(pageNumber) {
+            currentPage = pageNumber;
+            generateImages();
+        }
+
+        window.onload = () => {
+            gapiLoaded();
+            gisLoaded();
+        };
     </script>
     <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
-
-
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
