@@ -1,241 +1,89 @@
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generate Storyboard</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://apis.google.com/js/api.js" onload="handleClientLoad()"></script>
+  <head>
+    <title>Drive API Quickstart</title>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <p>Drive API Quickstart</p>
 
-    <style>
-        .container { max-width: 1200px; margin: 20px auto; }
-        .result img { max-width: 100%; height: auto; }
-        .storyboard-card { margin-bottom: 20px; }
-        .storyboard-card img { max-width: 100%; height: auto; border: 1px solid #ccc; }
-        .storyboard-card-title { font-size: 1.25rem; margin-bottom: 10px; }
-        .pagination { justify-content: center; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1 class="text-center">Generate Storyboard from Google Drive Document</h1>
-        <div class="text-center mb-4">
-            <div id="g_id_onload"
-                 data-client_id="1089323494988-rs9lvdd162aip6crvm95q4pq6tkuo8td.apps.googleusercontent.com"
-                 data-callback="handleCredentialResponse"
-                 data-auto_prompt="false">
-            </div>
-            <div class="g_id_signin" data-type="standard"></div>
-            <button class="btn btn-success" onclick="handleFileSelect()">Select File from Google Drive</button>
-            <button class="btn btn-warning" onclick="generateImages()">Generate Storyboard</button>
-        </div>
-        <div id="results" class="mt-4 row"></div>
-        <nav>
-            <ul id="pagination" class="pagination mt-4"></ul>
-        </nav>
-    </div>
+    <!--Add buttons to initiate auth sequence and sign out-->
+    <button id="authorize_button" onclick="handleAuthClick()">Authorize</button>
+    <button id="signout_button" onclick="handleSignoutClick()">Sign Out</button>
 
-    <script>
-        let parsedPrompts = [];
-        let currentPage = 1;
-        const itemsPerPage = 6;
-        let cards = [];
-        const apiUrl = 'https://checklist-flask-api.onrender.com/generate_images'; // Replace with your API URL
-        let accessToken;
+    <pre id="content" style="white-space: pre-wrap;"></pre>
 
-        function handleCredentialResponse(response) {
-            const responsePayload = decodeJwtResponse(response.credential);
-            console.log('ID: ' + responsePayload.sub);
-            console.log('Full Name: ' + responsePayload.name);
-            console.log('Given Name: ' + responsePayload.given_name);
-            console.log('Family Name: ' + responsePayload.family_name);
-            console.log('Image URL: ' + responsePayload.picture);
-            console.log('Email: ' + responsePayload.email);
+    <script type="text/javascript">
+      /* exported gapiLoaded */
+      /* exported gisLoaded */
+      /* exported handleAuthClick */
+      /* exported handleSignoutClick */
 
-            google.accounts.oauth2.initTokenClient({
-                client_id: '1089323494988-rs9lvdd162aip6crvm95q4pq6tkuo8td.apps.googleusercontent.com',
-                scope: 'https://www.googleapis.com/auth/drive.readonly',
-                callback: (tokenResponse) => {
-                    accessToken = tokenResponse.access_token;
-                    console.log('Access Token: ' + accessToken);
-                }
-            }).requestAccessToken();
+      // TODO(developer): Set to client ID and API key from the Developer Console
+      const CLIENT_ID = '<YOUR_CLIENT_ID>';
+      const API_KEY = '<YOUR_API_KEY>';
+
+      // Discovery doc URL for APIs used by the quickstart
+      const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+
+      // Authorization scopes required by the API; multiple scopes can be
+      // included, separated by spaces.
+      const SCOPES = 'https://www.googleapis.com/auth/drive.metadata.readonly';
+
+      let tokenClient;
+      let gapiInited = false;
+      let gisInited = false;
+
+      document.getElementById('authorize_button').style.visibility = 'hidden';
+      document.getElementById('signout_button').style.visibility = 'hidden';
+
+      /**
+       * Callback after api.js is loaded.
+       */
+      function gapiLoaded() {
+        gapi.load('client', initializeGapiClient);
+      }
+
+      /**
+       *  Sign out the user upon button click.
+       */
+      function handleSignoutClick() {
+        const token = gapi.client.getToken();
+        if (token !== null) {
+          google.accounts.oauth2.revoke(token.access_token);
+          gapi.client.setToken('');
+          document.getElementById('content').innerText = '';
+          document.getElementById('authorize_button').innerText = 'Authorize';
+          document.getElementById('signout_button').style.visibility = 'hidden';
         }
+      }
 
-        function decodeJwtResponse(token) {
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join(''));
-            return JSON.parse(jsonPayload);
+      /**
+       * Print metadata for first 10 files.
+       */
+      async function listFiles() {
+        let response;
+        try {
+          response = await gapi.client.drive.files.list({
+            'pageSize': 10,
+            'fields': 'files(id, name)',
+          });
+        } catch (err) {
+          document.getElementById('content').innerText = err.message;
+          return;
         }
-
-        function handleFileSelect() {
-            if (!accessToken) {
-                console.error('Access token not available.');
-                return;
-            }
-
-            gapi.load('picker', {'callback': onPickerApiLoad});
+        const files = response.result.files;
+        if (!files || files.length == 0) {
+          document.getElementById('content').innerText = 'No files found.';
+          return;
         }
-
-        function onPickerApiLoad() {
-            const picker = new google.picker.PickerBuilder()
-                .addView(google.picker.ViewId.DOCS)
-                .setOAuthToken(accessToken)
-                .setDeveloperKey('AIzaSyB2gDcdT1DhdQVipL0865cYwP3pNLbm_QM') // Use your actual API key here
-                .setCallback(pickerCallback)
-                .build();
-            picker.setVisible(true);
-        }
-
-        function pickerCallback(data) {
-            if (data.action === google.picker.Action.PICKED) {
-                const fileId = data.docs[0].id;
-                downloadFile(fileId);
-            } else if (data.action === google.picker.Action.CANCEL) {
-                console.log('User canceled the picker.');
-            }
-        }
-
-        function downloadFile(fileId) {
-            gapi.client.drive.files.get({
-                fileId: fileId,
-                alt: 'media'
-            }).then(response => {
-                const fileContent = response.body;
-                parsedPrompts = splitIntoPrompts(fileContent);
-                generateImages();
-            }, function(error) {
-                console.error('Error downloading file:', error);
-            });
-        }
-
-        function splitIntoPrompts(text) {
-            const lines = text.split('\n');
-            return lines.filter(line => line.trim() !== '');
-        }
-
-        async function generateImages() {
-            const resultsContainer = document.getElementById('results');
-            resultsContainer.innerHTML = '';
-
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = Math.min(startIndex + itemsPerPage, parsedPrompts.length);
-
-            for (let i = startIndex; i < endIndex; i++) {
-                const prompt = parsedPrompts[i];
-                const card = await generateImageCard(prompt, i + 1);
-                if (card) {
-                    cards.push(card);
-                    renderCards();
-                }
-            }
-
-            setupPagination(parsedPrompts.length);
-        }
-
-        async function generateImageCard(prompt, partNumber) {
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ prompt: prompt })
-                });
-
-                const data = await response.json();
-                if (data.error) {
-                    return null;
-                }
-
-                const card = {
-                    title: `Part ${partNumber}`,
-                    prompt: prompt,
-                    image_url: data[0].image_url,
-                    notes: ''
-                };
-
-                return card;
-            } catch (error) {
-                console.error('Error generating image:', error);
-                return null;
-            }
-        }
-
-        function renderCards() {
-            const resultsContainer = document.getElementById('results');
-            resultsContainer.innerHTML = '';
-
-            cards.forEach((card, index) => {
-                const col = document.createElement('div');
-                col.classList.add('col-md-4');
-                col.innerHTML = `
-                    <div class="card storyboard-card">
-                        <div class="card-body">
-                            <h2 class="storyboard-card-title">${card.title}</h2>
-                            <p>${card.prompt}</p>
-                            <img class="storyboard-card-img" src="${card.image_url}" alt="${card.title}">
-                            <textarea class="form-control text-area storyboard-card-text" placeholder="Add your notes here..." onchange="updateCardText(${index}, this.value)">${card.notes}</textarea>
-                        </div>
-                    </div>`;
-                resultsContainer.appendChild(col);
-            });
-        }
-
-        function updateCardText(cardIndex, text) {
-            cards[cardIndex].notes = text;
-        }
-
-        function setupPagination(totalItems) {
-            const totalPages = Math.ceil(totalItems / itemsPerPage);
-            const paginationContainer = document.getElementById('pagination');
-            paginationContainer.innerHTML = '';
-
-            for (let i = 1; i <= totalPages; i++) {
-                const li = document.createElement('li');
-                li.classList.add('page-item', i === currentPage ? 'active' : '');
-                li.innerHTML = `<a class="page-link" href="#" onclick="goToPage(${i})">${i}</a>`;
-                paginationContainer.appendChild(li);
-            }
-        }
-
-        function goToPage(pageNumber) {
-            currentPage = pageNumber;
-            generateImages();
-        }
-
-        function handleClientLoad() {
-            gapi.load('client:auth2', initializeClient);
-        }
-
-        function initializeClient() {
-            gapi.client.init({
-                apiKey: 'AIzaSyB2gDcdT1DhdQVipL0865cYwP3pNLbm_QM',
-                clientId: '1089323494988-rs9lvdd162aip6crvm95q4pq6tkuo8td.apps.googleusercontent.com',
-                discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
-                scope: 'https://www.googleapis.com/auth/drive.readonly'
-            }).then(function () {
-                gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
-                updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-            }).catch(error => {
-                console.error('Error initializing client:', error);
-            });
-        }
-
-        function updateSigninStatus(isSignedIn) {
-            if (isSignedIn) {
-                console.log('User is signed in.');
-            } else {
-                console.log('User is not signed in.');
-            }
-        }
-
-        window.onload = handleClientLoad;
+        // Flatten to string to display
+        const output = files.reduce(
+            (str, file) => `${str}${file.name} (${file.id})\n`,
+            'Files:\n');
+        document.getElementById('content').innerText = output;
+      }
     </script>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+
 
