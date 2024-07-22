@@ -107,7 +107,7 @@
                 const fileContent = response.body;
                 parsedPrompts = splitIntoPrompts(fileContent);
                 generateImages();
-            }, function(error) {
+            }).catch(error => {
                 console.error('Error downloading file:', error);
             });
         }
@@ -220,7 +220,7 @@
             }).then(function () {
                 gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
                 updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-            }, function(error) {
+            }).catch(error => {
                 console.error('Error initializing client:', error);
             });
         }
