@@ -21,7 +21,7 @@
         <h1 class="text-center">Generate Storyboard from Google Drive Document</h1>
         <div class="text-center mb-4">
             <div id="g_id_onload"
-                 data-client_id="YOUR_CLIENT_ID"
+                 data-client_id="1089323494988-rs9lvdd162aip6crvm95q4pq6tkuo8td.apps.googleusercontent.com"
                  data-callback="handleCredentialResponse"
                  data-auto_prompt="false">
             </div>
@@ -53,7 +53,7 @@
             console.log('Email: ' + responsePayload.email);
 
             google.accounts.oauth2.initTokenClient({
-                client_id: 'YOUR_CLIENT_ID',
+                client_id: '1089323494988-rs9lvdd162aip6crvm95q4pq6tkuo8td.apps.googleusercontent.com',
                 scope: 'https://www.googleapis.com/auth/drive.readonly',
                 callback: (tokenResponse) => {
                     accessToken = tokenResponse.access_token;
@@ -84,7 +84,7 @@
             const picker = new google.picker.PickerBuilder()
                 .addView(google.picker.ViewId.DOCS)
                 .setOAuthToken(accessToken)
-                .setDeveloperKey('YOUR_API_KEY')
+                .setDeveloperKey('AIzaSyBPPC2B70jYecqEQo-VbNy06VenxapaFJU')
                 .setCallback(pickerCallback)
                 .build();
             picker.setVisible(true);
@@ -213,8 +213,8 @@
 
         function initializeClient() {
             gapi.client.init({
-                apiKey: 'YOUR_API_KEY',
-                clientId: 'YOUR_CLIENT_ID',
+                apiKey: 'AIzaSyBPPC2B70jYecqEQo-VbNy06VenxapaFJU',
+                clientId: '1089323494988-rs9lvdd162aip6crvm95q4pq6tkuo8td.apps.googleusercontent.com',
                 discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
                 scope: 'https://www.googleapis.com/auth/drive.readonly'
             }).then(function () {
